@@ -32,6 +32,23 @@
 
 > **Root is not required** to run the script — all checks except AppArmor status work as a regular user. Running with `sudo` is recommended for complete results, and is the safer choice when piping from `curl`.
 
+### Compatibility
+
+The script is designed to work across all major Linux distributions:
+
+| Distribution family | Package manager check | Module path |
+|---|---|---|
+| Debian, Ubuntu | `dpkg` + kernel changelog | `/lib/modules/` |
+| RHEL, CentOS, Amazon Linux | `rpm` (`kernel`, `kernel-rt`) | `/lib/modules/` |
+| SUSE, openSUSE | `rpm` (`kernel-default`) | `/lib/modules/` |
+| Arch Linux | `pacman` + advisory link | `/usr/lib/modules/` |
+| Fedora | `rpm` + `/usr/lib/modules/` fallback | `/usr/lib/modules/` |
+
+> **Requires `bash`** — the script uses bash-specific syntax and will not run under `sh`, `ash`, or `dash`. On Alpine Linux (which uses busybox ash by default), install bash first:
+> ```bash
+> apk add bash
+> ```
+
 ### Quick run (single server)
 
 Without root — most checks work:
