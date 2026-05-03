@@ -74,7 +74,9 @@ check_module() {
   fi
 
   # Check if the module exists on disk (could be loaded on demand)
-  MOD_PATH=$(find /lib/modules/"$(uname -r)" -name 'algif_aead.ko*' 2>/dev/null | head -1)
+  # Some distros use /usr/lib/modules (Arch, newer Fedora), others /lib/modules (Debian, RHEL)
+  MOD_PATH=$(find /lib/modules/"$(uname -r)" /usr/lib/modules/"$(uname -r)" \
+             -name 'algif_aead.ko*' 2>/dev/null | head -1)
   if [ -n "$MOD_PATH" ]; then
     warn "Module file found at: $MOD_PATH — it can be auto-loaded unless blacklisted."
   else
@@ -141,9 +143,10 @@ check_mac() {
     fi
   fi
 
-  if command -v aa-status &>/dev/null; then
+  if command -v aa-status &>/dev/null || command -v apparmor_status &>/dev/null; then
+    AA_CMD=$(command -v aa-status || command -v apparmor_status)
     if [ "$(id -u)" -eq 0 ]; then
-      if aa-status --enabled 2>/dev/null; then
+      if "$AA_CMD" --enabled 2>/dev/null; then
         info "AppArmor is enabled — only mitigates Copy Fail if AF_ALG is explicitly denied in active profiles."
       else
         info "AppArmor is installed but not enabled."
@@ -153,7 +156,7 @@ check_mac() {
     fi
   fi
 
-  if ! command -v getenforce &>/dev/null && ! command -v aa-status &>/dev/null; then
+  if ! command -v getenforce &>/dev/null && ! command -v aa-status &>/dev/null && ! command -v apparmor_status &>/dev/null; then
     warn "Neither SELinux nor AppArmor tools detected — no MAC layer present."
   fi
 }
@@ -170,18 +173,29 @@ check_distro_patch() {
   # Check if any kernel changelog / package mentions the CVE
   PATCHED=0
   if command -v rpm &>/dev/null; then
-    if rpm -q --changelog kernel 2>/dev/null | grep -q 'CVE-2026-31431'; then
-      pass "CVE-2026-31431 appears in the installed kernel's RPM changelog — likely patched."
-      PATCHED=1
-    fi
+    # RHEL/CentOS/Fedora/Amazon Linux use 'kernel'; SUSE uses 'kernel-default'
+    for KPKG in kernel kernel-default kernel-rt; do
+      if rpm -q --changelog "$KPKG" 2>/dev/null | grep -q 'CVE-2026-31431'; then
+        pass "CVE-2026-31431 appears in the installed $KPKG RPM changelog — likely patched."
+        PATCHED=1
+        break
+      fi
+    done
   fi
   if command -v dpkg &>/dev/null; then
-    PKG=$(dpkg -l linux-image-"$(uname -r)" 2>/dev/null | tail -1)
     CHANGES=$(zcat /usr/share/doc/linux-image-"$(uname -r)"/changelog.Debian.gz 2>/dev/null \
               || cat /usr/share/doc/linux-image-"$(uname -r)"/changelog* 2>/dev/null)
     if echo "$CHANGES" | grep -q 'CVE-2026-31431'; then
       pass "CVE-2026-31431 appears in the installed kernel's Debian changelog — likely patched."
       PATCHED=1
+    fi
+  fi
+  if command -v pacman &>/dev/null; then
+    if pacman -Qi linux 2>/dev/null | grep -q 'CVE-2026-31431'; then
+      pass "CVE-2026-31431 appears in the Arch linux package info — likely patched."
+      PATCHED=1
+    else
+      info "Arch Linux detected — check https://security.archlinux.org/ for patch status."
     fi
   fi
   if [ $PATCHED -eq 0 ]; then
