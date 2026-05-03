@@ -165,7 +165,11 @@ sudo zypper update kernel-default
 
 **2. Blacklist the module** *(immediate, persistent)*
 ```bash
-echo -e "blacklist algif_aead\ninstall algif_aead /bin/true" | sudo tee /etc/modprobe.d/copyfail.conf
+sudo tee /etc/modprobe.d/copyfail.conf << 'EOF'
+blacklist algif_aead
+install algif_aead /bin/true
+EOF
+
 sudo depmod -a
 
 # Debian/Ubuntu
