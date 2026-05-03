@@ -20,15 +20,26 @@
 
 ### What the script checks
 
-- **Kernel version** — whether you're in the affected range (≥ 4.13)
-- **`algif_aead` module** — loaded, present on disk, or blacklisted
-- **Boot parameters** — `initcall_blacklist=algif_aead_init` presence
-- **AF_ALG socket reachability** — whether the exploit path is open to the current user
-- **SELinux / AppArmor** — MAC layer presence (partial mitigation only)
-- **Distro patch status** — CVE listed in kernel changelog
+| Check | Needs root? |
+|---|---|
+| Kernel version — whether you're in the affected range (≥ 4.13) | No |
+| `algif_aead` module — loaded, present on disk, or blacklisted | No |
+| Boot parameters — `initcall_blacklist=algif_aead_init` presence | No |
+| AF_ALG socket reachability — whether the exploit path is open | No |
+| SELinux status | No |
+| AppArmor status | **Yes** — partial output only without root |
+| Distro patch status — CVE listed in kernel changelog | No |
+
+> **Root is not required** to run the script — all checks except AppArmor status work as a regular user. Running with `sudo` is recommended for complete results, and is the safer choice when piping from `curl`.
 
 ### Quick run (single server)
 
+Without root — most checks work:
+```bash
+curl -fsSL https://raw.githubusercontent.com/codesource/copyfail-check/main/check_copyfail.sh | bash
+```
+
+With root — full results including AppArmor status:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/codesource/copyfail-check/main/check_copyfail.sh | sudo bash
 ```
@@ -43,7 +54,8 @@ curl -fsSL https://raw.githubusercontent.com/codesource/copyfail-check/main/chec
 ```bash
 curl -fsSL https://raw.githubusercontent.com/codesource/copyfail-check/main/check_copyfail.sh -o check_copyfail.sh
 less check_copyfail.sh
-sudo bash check_copyfail.sh
+bash check_copyfail.sh        # without root
+sudo bash check_copyfail.sh   # full results
 ```
 
 ### Run across a fleet
