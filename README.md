@@ -1,5 +1,14 @@
 # copyfail-check
 
+> [!IMPORTANT]
+> **This repository is archived.** The Copy Fail check now lives in **[cve-check](https://github.com/codesource/cve-check)**, together with other vulnerability checks and an optional `--fix` mode that applies the remediation. See [checks/CVE-2026-31431](https://github.com/codesource/cve-check/tree/main/checks/CVE-2026-31431) for this check.
+>
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/codesource/cve-check/main/cve-check.sh | sudo bash -s -- CVE-2026-31431
+> ```
+>
+> `check_copyfail.sh` below still works but is no longer updated.
+
 > Shell scripts to detect Linux kernel vulnerabilities, check mitigation status, and guide remediation — designed to run locally or across fleets via SSH, Ansible, or pssh.
 
 ---
